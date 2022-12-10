@@ -4,16 +4,8 @@ import {
   scale,
   translate,
   compose,
-  flipY,
 } from "transformation-matrix"
-import {
-  createRef,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from "react"
+import { useEffect, useRef, useState } from "react"
 
 type Point = { x: number; y: number }
 
@@ -23,28 +15,18 @@ interface Props {
   onSetTransform?: (transform: Matrix) => any
 }
 
-export const useMouseMatrixTransform = (props: Props) => {
+export const useMouseMatrixTransform = (props: Props = {}) => {
   const extRef = useRef<any>(null)
   const canvasElm = props.canvasElm ?? extRef.current
   const [internalTransform, setInternalTransform] = useState<Matrix>(identity())
-  const extTrackingTransform = createRef<Matrix>()
 
   const setTransform = (newTransform: Matrix) => {
     if (props.onSetTransform) {
-      ;(extTrackingTransform as any).current = newTransform
       props.onSetTransform(newTransform)
     } else {
       setInternalTransform(newTransform)
     }
   }
-
-  const [canvasReloadCount, reloadCanvasEvents] = useReducer((s) => s + 1, 0)
-  useEffect(() => {
-    if (extTrackingTransform.current !== props.transform) {
-      ;(extTrackingTransform as any).current = props.transform
-      reloadCanvasEvents()
-    }
-  }, [props.transform])
 
   const transform = props.transform ?? internalTransform
 
@@ -119,7 +101,7 @@ export const useMouseMatrixTransform = (props: Props) => {
       canvasElm.removeEventListener("mouseout", handleMouseOut)
       canvasElm.removeEventListener("wheel", handleMouseWheel)
     }
-  }, [canvasElm, reloadCanvasEvents])
+  }, [canvasElm])
 
   return {
     ref: extRef,
