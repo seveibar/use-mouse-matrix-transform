@@ -1,0 +1,27 @@
+{
+  "name": "use-mouse-matrix-transform",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsup src --sourcemap --dts"
+  },
+  "repository": "https://github.com/seveibar/use-mouse-matrix-transform",
+  "devDependencies": {
+    "@semantic-release/commit-analyzer": "^9.0.2",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/npm": "^9.0.1",
+    "@semantic-release/release-notes-generator": "^10.0.3",
+    "@types/react": "^18.0.26",
+    "esbuild": "^0.16.4",
+    "esbuild-runner": "^2.2.2",
+    "prettier": "^2.8.1",
+    "tsup": "^6.5.0",
+    "typescript": "^4.9.4"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
+  },
+  "dependencies": {
+    "transformation-matrix": "^2.14.0"
+  }
+}
