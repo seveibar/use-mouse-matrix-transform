@@ -24,25 +24,17 @@ npm install use-mouse-matrix-transform
 
 - **ref**: Put this ref on the container element that you want to drag/zoom on
 - **transform** A transformation matrix you can use to transform your elements.
+- **applyTransformToPoint** Take any `[x,y]` or `{ x, y }` object and apply the transformation
 
 ## Example
 
 ```ts
 import useMouseMatrixTransform from "use-mouse-matrix-transform"
 import { useEffect, useRef, useState } from "react"
-import {
-  Matrix,
-  identity,
-  scale,
-  translate,
-  compose,
-} from "transformation-matrix"
-import LayoutObject from "./LayoutObject"
-
-const defaultTransform = compose(identity(), translate(400, 300), scale(40, 40))
+import SomeLayoutObject from "./SomeLayoutObject"
 
 export default ({ layout }: { layout: Layout }) => {
-  const { ref, transform } = useMouseMatrixTransform()
+  const { ref, applyTransformToPoint } = useMouseMatrixTransform()
 
   return (
     <div>
@@ -56,9 +48,9 @@ export default ({ layout }: { layout: Layout }) => {
         }}
       >
         {layout.objects
-          .map((obj) => applyTransform(obj, transform))
+          .map((obj) => applyTransformToPoint(obj))
           .map((obj, i) => (
-            <LayoutObject obj={obj} />
+            <SomeLayoutObject obj={obj} />
           ))}
       </div>
     </div>

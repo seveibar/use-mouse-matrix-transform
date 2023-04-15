@@ -4,8 +4,9 @@ import {
   scale,
   translate,
   compose,
+  applyToPoint,
 } from "transformation-matrix"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 type Point = { x: number; y: number }
 
@@ -36,7 +37,8 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
     let m0: Point = { x: 0, y: 0 },
       m1: Point = { x: 0, y: 0 },
-      md = false
+      md = false,
+      mlastrel: Point = { x: 0, y: 0 }
 
     const getMousePos = (e: MouseEvent) => {
       const rect = canvasElm.getBoundingClientRect()
@@ -61,6 +63,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       md = false
     }
     function handleMouseMove(e: MouseEvent) {
+      mlastrel = getMousePos(e)
       if (!md) return
       m1 = getMousePos(e)
 
@@ -103,9 +106,15 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     }
   }, [canvasElm])
 
+  const applyTransformToPoint = useCallback(
+    (obj: Point | [number, number]) => applyToPoint(transform, obj),
+    [transform]
+  )
+
   return {
     ref: extRef,
     transform,
+    applyTransformToPoint,
   }
 }
 
