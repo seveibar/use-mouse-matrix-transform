@@ -13,13 +13,16 @@ type Point = { x: number; y: number }
 interface Props {
   canvasElm?: HTMLElement
   transform?: Matrix
+  initialTransform?: Matrix
   onSetTransform?: (transform: Matrix) => any
 }
 
 export const useMouseMatrixTransform = (props: Props = {}) => {
   const extRef = useRef<any>(null)
   const canvasElm = props.canvasElm ?? extRef.current
-  const [internalTransform, setInternalTransform] = useState<Matrix>(identity())
+  const [internalTransform, setInternalTransform] = useState<Matrix>(
+    props.initialTransform ?? identity()
+  )
 
   const setTransform = (newTransform: Matrix) => {
     if (props.onSetTransform) {
