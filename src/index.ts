@@ -19,7 +19,6 @@ interface Props {
 
 export const useMouseMatrixTransform = (props: Props = {}) => {
   const extRef = useRef<any>(null)
-  const [refFoundAfterRender, setRefFoundAfterRender] = useState(false)
   const canvasElm = props.canvasElm ?? extRef.current
   const [internalTransform, setInternalTransform] = useState<Matrix>(
     props.initialTransform ?? identity()
@@ -35,21 +34,10 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
   const transform = props.transform ?? internalTransform
 
-  // Added because the ref attachment isn't picked up unless a render
-  // is triggered
   useEffect(() => {
-    if (extRef.current !== null) return
-    const timeout = setTimeout(() => {
-      if (extRef.current !== null) {
-        setRefFoundAfterRender(true)
-      }
-    }, 200)
-    return () => {
-      clearTimeout(timeout)
-    }
-  }, [])
-
-  useEffect(() => {
+    // redefine canvasElm, it can sometimes not be defined in
+    // render but be defined in effects due to SSR
+    const canvasElm = props.canvasElm ?? extRef.current
     if (!canvasElm) return
     let init_tf = props.transform ?? internalTransform
 
