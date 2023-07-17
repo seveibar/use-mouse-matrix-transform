@@ -23,8 +23,8 @@ npm install use-mouse-matrix-transform
 `useMouseMatrixTransform` returns an object with the following properties:
 
 - **ref**: Put this ref on the container element that you want to drag/zoom on
-- **transform** A transformation matrix you can use to transform your elements.
-- **applyTransformToPoint** Take any `[x,y]` or `{ x, y }` object and apply the transformation
+- **transform** A transformation matrix that transforms screen x,y coordinates into the target transform space
+- **applyTransformToPoint** Take any `[x,y]` or `{ x, y }` object and apply the transformation, returns a transformed point
 
 ## Example
 
