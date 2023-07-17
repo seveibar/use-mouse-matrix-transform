@@ -47,10 +47,17 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       mlastrel: Point = { x: 0, y: 0 }
 
     const getMousePos = (e: MouseEvent) => {
-      const rect = canvasElm.getBoundingClientRect()
+      // Using the offset for the elemenet messes things up when the element
+      // size might change or the element is moved
+      // const rect = canvasElm.getBoundingClientRect()
+      // return {
+      //   x: e.clientX - rect.left,
+      //   y: e.clientY - rect.top,
+      // }
+
       return {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top,
+        x: e.pageX,
+        y: e.pageY,
       }
     }
 
