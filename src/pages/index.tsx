@@ -1,3 +1,4 @@
+"use client"
 // Example Usage
 import React from "react"
 import { useMouseMatrixTransform } from "../index"
