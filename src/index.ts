@@ -19,10 +19,11 @@ interface Props {
 
 export const useMouseMatrixTransform = (props: Props = {}) => {
   const extRef = useRef<any>(null)
-  const canvasElm = props.canvasElm ?? extRef.current
+  const outerCanvasElm = props.canvasElm ?? extRef.current
   const [internalTransform, setInternalTransform] = useState<Matrix>(
     props.initialTransform ?? identity()
   )
+  const [waitCounter, setWaitCounter] = useState(0)
 
   const setTransform = (newTransform: Matrix) => {
     if (props.onSetTransform) {
@@ -35,10 +36,18 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
   const transform = props.transform ?? internalTransform
 
   useEffect(() => {
-    // redefine canvasElm, it can sometimes not be defined in
-    // render but be defined in effects due to SSR
     const canvasElm = props.canvasElm ?? extRef.current
-    if (!canvasElm) return
+    if (canvasElm && !outerCanvasElm) {
+      // Always re-render when the canvas element is known
+      setWaitCounter(waitCounter + 1)
+      return
+    }
+    if (!canvasElm) {
+      const timeout = setTimeout(() => {
+        setWaitCounter(waitCounter + 1)
+      }, 100)
+      return () => clearTimeout(timeout)
+    }
     let init_tf = props.transform ?? internalTransform
 
     let m0: Point = { x: 0, y: 0 },
@@ -47,18 +56,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       mlastrel: Point = { x: 0, y: 0 }
 
     const getMousePos = (e: MouseEvent) => {
-      // Using the offset for the elemenet messes things up when the element
-      // size might change or the element is moved
-      // const rect = canvasElm.getBoundingClientRect()
-      // return {
-      //   x: e.clientX - rect.left,
-      //   y: e.clientY - rect.top,
-      // }
-
-      return {
-        x: e.pageX,
-        y: e.pageY,
-      }
+      return { x: e.pageX, y: e.pageY }
     }
 
     function handleMouseDown(e: MouseEvent) {
@@ -117,7 +115,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       canvasElm.removeEventListener("mouseout", handleMouseOut)
       canvasElm.removeEventListener("wheel", handleMouseWheel)
     }
-  }, [canvasElm])
+  }, [outerCanvasElm, waitCounter])
 
   const applyTransformToPoint = useCallback(
     (obj: Point | [number, number]) => applyToPoint(transform, obj),
