@@ -6,7 +6,7 @@ import {
   compose,
   applyToPoint,
 } from "transformation-matrix"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useReducer, useRef, useState } from "react"
 
 type Point = { x: number; y: number }
 
@@ -24,14 +24,26 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     props.initialTransform ?? identity()
   )
   const [waitCounter, setWaitCounter] = useState(0)
+  const [extChangeCounter, incExtChangeCounter] = useReducer((s) => s + 1, 0)
 
-  const setTransform = (newTransform: Matrix) => {
-    if (props.onSetTransform) {
-      props.onSetTransform(newTransform)
-    } else {
-      setInternalTransform(newTransform)
-    }
-  }
+  const setTransform = useCallback(
+    (newTransform: Matrix) => {
+      if (props.onSetTransform) {
+        props.onSetTransform(newTransform)
+      } else {
+        setInternalTransform(newTransform)
+      }
+    },
+    [props.onSetTransform, setInternalTransform]
+  )
+
+  const setTransformExt = useCallback(
+    (newTransform: Matrix) => {
+      incExtChangeCounter()
+      return setTransform(newTransform)
+    },
+    [setTransform]
+  )
 
   const transform = props.transform ?? internalTransform
 
@@ -115,7 +127,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       canvasElm.removeEventListener("mouseout", handleMouseOut)
       canvasElm.removeEventListener("wheel", handleMouseWheel)
     }
-  }, [outerCanvasElm, waitCounter])
+  }, [outerCanvasElm, waitCounter, extChangeCounter])
 
   const applyTransformToPoint = useCallback(
     (obj: Point | [number, number]) => applyToPoint(transform, obj),
@@ -126,6 +138,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     ref: extRef,
     transform,
     applyTransformToPoint,
+    setTransform: setTransformExt,
   }
 }
 
