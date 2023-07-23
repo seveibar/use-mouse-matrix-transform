@@ -45,7 +45,6 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     },
     [setTransform]
   )
-  console.log({ extChangeCounter, internalTransform })
 
   const transform = props.transform ?? internalTransform
 
