@@ -62,7 +62,6 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       return () => clearTimeout(timeout)
     }
     let init_tf = props.transform ?? internalTransform
-    console.log({ init_tf })
 
     let m0: Point = { x: 0, y: 0 },
       m1: Point = { x: 0, y: 0 },
