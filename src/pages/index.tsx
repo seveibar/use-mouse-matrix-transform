@@ -10,7 +10,7 @@ export default () => {
   // console.log(transform, left, top)
 
   return (
-    <>
+    <div style={{ height: 2000 }}>
       <div
         ref={ref}
         style={{
@@ -40,6 +40,6 @@ export default () => {
         <input type="checkbox" onClick={() => setOffCenter(!offCenter)} /> off
         center
       </div>
-    </>
+    </div>
   )
 }

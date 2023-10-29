@@ -71,8 +71,8 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
     const getMousePos = (e: MouseEvent) => {
       return {
-        x: e.pageX - canvasElm.getBoundingClientRect().left,
-        y: e.pageY - canvasElm.getBoundingClientRect().top,
+        x: e.screenX - canvasElm.getBoundingClientRect().left,
+        y: e.screenY - canvasElm.getBoundingClientRect().top,
       }
     }
 
