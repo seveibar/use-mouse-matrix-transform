@@ -69,7 +69,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       mlastrel: Point = { x: 0, y: 0 }
 
     const getMousePos = (e: MouseEvent) => {
-      return { x: e.pageX, y: e.pageY }
+      return { x: e.offsetX, y: e.offsetY }
     }
 
     function handleMouseDown(e: MouseEvent) {
