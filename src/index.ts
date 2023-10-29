@@ -49,7 +49,8 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
   const transform = props.transform ?? internalTransform
 
   useEffect(() => {
-    const canvasElm = props.canvasElm ?? extRef.current
+    const canvasElm: HTMLCanvasElement | null =
+      props.canvasElm ?? extRef.current
     if (canvasElm && !outerCanvasElm) {
       // Always re-render when the canvas element is known
       setWaitCounter(waitCounter + 1)
@@ -69,7 +70,10 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       mlastrel: Point = { x: 0, y: 0 }
 
     const getMousePos = (e: MouseEvent) => {
-      return { x: e.offsetX, y: e.offsetY }
+      return {
+        x: e.pageX - canvasElm.getBoundingClientRect().left,
+        y: e.pageY - canvasElm.getBoundingClientRect().top,
+      }
     }
 
     function handleMouseDown(e: MouseEvent) {
