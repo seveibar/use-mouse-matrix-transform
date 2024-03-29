@@ -40,6 +40,7 @@ export default () => {
         <input type="checkbox" onClick={() => setOffCenter(!offCenter)} /> off
         center
       </div>
+      <div style={{ marginTop: 20 }}>Try dragging the canvas above around</div>
     </div>
   )
 }

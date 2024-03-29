@@ -4,7 +4,8 @@
   "main": "dist/index.js",
   "scripts": {
     "start": "next dev",
-    "build": "tsup src --sourcemap --dts"
+    "build": "tsup src --sourcemap --dts",
+    "vercel-build": "next build"
   },
   "repository": "https://github.com/seveibar/use-mouse-matrix-transform",
   "devDependencies": {
@@ -16,8 +17,10 @@
     "@types/react": "^18.0.26",
     "esbuild": "^0.16.4",
     "esbuild-runner": "^2.2.2",
-    "next": "^13.4.10",
+    "next": "^13.5.6",
     "prettier": "^2.8.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tsup": "^6.5.0",
     "typescript": "^4.9.4"
   },

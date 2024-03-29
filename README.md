@@ -1,5 +1,7 @@
 # useMouseMatrixTransform
 
+[Online Preview](https://use-mouse-matrix-transform.vercel.app)
+
 Easily create draggable, zoomable layouts (maps, svg explorers, canvas dragging, etc.)
 
 Allows you to easily create map-like interactions with a canvas element, this
@@ -11,7 +13,7 @@ custom renderers.
 ## Installation
 
 ```bash
-npm install use-mouse-matrix-transform
+npm add --save use-mouse-matrix-transform
 ```
 
 ## Props
