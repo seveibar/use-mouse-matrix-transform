@@ -111,6 +111,21 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     }
     function handleMouseOut(e: MouseEvent) {
       if (!md) return
+
+      // If the mouseout occurs in the bounding box of the canvasElm, it's
+      // defocusing on internal elements, so we should ignore it
+      if (canvasElm) {
+        const boundingBox = canvasElm.getBoundingClientRect()
+        if (
+          e.clientX >= boundingBox.left + 10 &&
+          e.clientX <= boundingBox.right - 10 &&
+          e.clientY >= boundingBox.top + 10 &&
+          e.clientY <= boundingBox.bottom - 10
+        ) {
+          return
+        }
+      }
+
       md = false
       m1 = getMousePos(e)
 
@@ -121,14 +136,14 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
     canvasElm.addEventListener("mousedown", handleMouseDown)
     canvasElm.addEventListener("mouseup", handleMouseUp)
-    canvasElm.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mousemove", handleMouseMove)
     canvasElm.addEventListener("mouseout", handleMouseOut)
     canvasElm.addEventListener("wheel", handleMouseWheel)
 
     return () => {
       canvasElm.removeEventListener("mousedown", handleMouseDown)
       canvasElm.removeEventListener("mouseup", handleMouseUp)
-      canvasElm.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("mousemove", handleMouseMove)
       canvasElm.removeEventListener("mouseout", handleMouseOut)
       canvasElm.removeEventListener("wheel", handleMouseWheel)
     }
