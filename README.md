@@ -1,5 +1,7 @@
 # useMouseMatrixTransform
 
+Easily create draggable, zoomable layouts (maps, svg explorers, canvas dragging, etc.)
+
 Allows you to easily create map-like interactions with a canvas element, this
 library gives you flexibility in what context you use the transformations because
 it just outputs/changes a transform matrix, not the actual elements contained
