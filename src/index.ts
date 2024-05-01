@@ -19,6 +19,7 @@ interface Props {
 
 export const useMouseMatrixTransform = (props: Props = {}) => {
   const extRef = useRef<any>(null)
+  const [lastDragCancelTime, setLastDragCancelTime] = useState(0)
   const outerCanvasElm = props.canvasElm ?? extRef.current
   const [internalTransform, setInternalTransform] = useState<Matrix>(
     props.initialTransform ?? identity()
@@ -47,6 +48,10 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
   )
 
   const transform = props.transform ?? internalTransform
+
+  const cancelDrag = useCallback(() => {
+    setLastDragCancelTime(Date.now())
+  }, [])
 
   useEffect(() => {
     const canvasElm: HTMLCanvasElement | null =
@@ -78,10 +83,12 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
     function handleMouseDown(e: MouseEvent) {
       m0 = getMousePos(e)
+      if (Date.now() - lastDragCancelTime < 100) return
       md = true
       e.preventDefault()
     }
     function handleMouseUp(e: MouseEvent) {
+      if (!md) return
       m1 = getMousePos(e)
 
       const new_tf = compose(translate(m1.x - m0.x, m1.y - m0.y), init_tf)
@@ -147,7 +154,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       canvasElm.removeEventListener("mouseout", handleMouseOut)
       canvasElm.removeEventListener("wheel", handleMouseWheel)
     }
-  }, [outerCanvasElm, waitCounter, extChangeCounter])
+  }, [outerCanvasElm, waitCounter, extChangeCounter, lastDragCancelTime])
 
   const applyTransformToPoint = useCallback(
     (obj: Point | [number, number]) => applyToPoint(transform, obj),
@@ -159,6 +166,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     transform,
     applyTransformToPoint,
     setTransform: setTransformExt,
+    cancelDrag
   }
 }
 
