@@ -2,13 +2,22 @@
 // Example Usage
 import React, { useState } from "react"
 import { useMouseMatrixTransform } from "../index"
+
 export default () => {
-  const { ref, applyTransformToPoint, transform, cancelDrag } =
-    useMouseMatrixTransform()
+  const {
+    ref,
+    applyTransformToPoint,
+    transform,
+    setTransform,
+    cancelDrag,
+    handleMouseWheel,
+  } = useMouseMatrixTransform()
   const [offCenter, setOffCenter] = useState(false)
 
-  const { x: left, y: top } = applyTransformToPoint({ x: 100, y: 100 }) as any
-  // console.log(transform, left, top)
+  const { x: redLeft, y: redTop } = applyTransformToPoint({
+    x: 100,
+    y: 100,
+  }) as any
 
   return (
     <div style={{ height: 2000 }}>
@@ -23,22 +32,25 @@ export default () => {
           width: 600,
           overflow: "hidden",
         }}
+        onWheel={handleMouseWheel} // Attach wheel event to canvas for zooming
       >
         <div
           style={{
             position: "absolute",
-            left,
-            top,
+            left: redLeft,
+            top: redTop,
             width: 25 * transform.d,
             height: 25 * transform.d,
             backgroundColor: "red",
           }}
         ></div>
+
+        {/* Blue button, unaffected by zoom */}
         <div
           style={{
             position: "absolute",
-            left: left + 400,
-            top: top + 100,
+            left: 500,
+            top: 200,
             padding: 8,
             color: "white",
             cursor: "pointer",

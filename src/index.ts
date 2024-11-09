@@ -49,6 +49,32 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
   const transform = props.transform ?? internalTransform
 
+  const handleMouseWheel = useCallback(
+    (e: React.WheelEvent) => {
+      const canvasElm = outerCanvasElm
+      if (!canvasElm) return
+
+      // Get mouse position relative to the canvas
+      const mouseX = e.pageX - canvasElm.getBoundingClientRect().left
+      const mouseY = e.pageY - canvasElm.getBoundingClientRect().top
+
+      // Set the scale factor for zooming
+      const scaleFactor = 1 + e.deltaY / 1000
+
+      // Calculate new transform with mouse as center
+      const newTransform = compose(
+        translate(mouseX, mouseY), // Move canvas to mouse position
+        scale(scaleFactor, scaleFactor), // Scale
+        translate(-mouseX, -mouseY), // Move back to original position
+        transform // Apply previous transformations
+      )
+
+      setTransform(newTransform)
+      e.preventDefault() // Prevent default scroll behavior
+    },
+    [outerCanvasElm, transform, setTransform]
+  )
+
   const cancelDrag = useCallback(() => {
     setLastDragCancelTime(Date.now())
   }, [])
@@ -76,8 +102,8 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
     const getMousePos = (e: MouseEvent) => {
       return {
-        x: e.pageX - canvasElm.getBoundingClientRect().left - window.scrollX,
-        y: e.pageY - canvasElm.getBoundingClientRect().top - window.scrollY,
+        x: e.pageX - canvasElm.getBoundingClientRect().left,
+        y: e.pageY - canvasElm.getBoundingClientRect().top,
       }
     }
 
@@ -108,7 +134,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       const center = getMousePos(e)
       const new_tf = compose(
         translate(center.x, center.y),
-        scale(1 - e.deltaY / 1000, 1 - e.deltaY / 1000),
+        scale(1 + e.deltaY / 1000, 1 + e.deltaY / 1000),
         translate(-center.x, -center.y),
         init_tf
       )
@@ -166,7 +192,8 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     transform,
     applyTransformToPoint,
     setTransform: setTransformExt,
-    cancelDrag
+    cancelDrag,
+    handleMouseWheel,
   }
 }
 
