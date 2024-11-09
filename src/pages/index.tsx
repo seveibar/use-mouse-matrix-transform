@@ -1,19 +1,24 @@
 "use client"
-// Example Usage
-import React, { useState } from "react"
+import React, { useState, useRef } from "react"
 import { useMouseMatrixTransform } from "../index"
-export default () => {
-  const { ref, applyTransformToPoint, transform, cancelDrag } =
-    useMouseMatrixTransform()
-  const [offCenter, setOffCenter] = useState(false)
+import { toString as transformToString } from "transformation-matrix"
 
-  const { x: left, y: top } = applyTransformToPoint({ x: 100, y: 100 }) as any
-  // console.log(transform, left, top)
+export default () => {
+  const svgDivRef = useRef<HTMLDivElement>(null)
+  const { ref, cancelDrag } = useMouseMatrixTransform({
+    onSetTransform(transform) {
+      if (svgDivRef.current) {
+        svgDivRef.current.style.transform = transformToString(transform)
+      }
+    },
+  })
+
+  const [offCenter, setOffCenter] = useState(false)
 
   return (
     <div style={{ height: 2000 }}>
       <div
-        ref={ref}
+        ref={ref as React.RefObject<HTMLDivElement>}
         style={{
           marginTop: offCenter ? 400 : 0,
           marginLeft: offCenter ? 400 : 0,
@@ -22,24 +27,28 @@ export default () => {
           height: 600,
           width: 600,
           overflow: "hidden",
+          cursor: "grab",
         }}
       >
         <div
+          ref={svgDivRef}
           style={{
             position: "absolute",
-            left,
-            top,
-            width: 25 * transform.d,
-            height: 25 * transform.d,
+            left: 0,
+            top: 0,
+            width: 25,
+            height: 25,
             backgroundColor: "red",
+            pointerEvents: "none",
+            transformOrigin: "0 0",
           }}
         ></div>
         <div
           style={{
             position: "absolute",
-            left: left + 400,
-            top: top + 100,
             padding: 8,
+            right: 0,
+            bottom: 0,
             color: "white",
             cursor: "pointer",
             backgroundColor: "blue",
