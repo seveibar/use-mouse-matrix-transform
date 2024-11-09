@@ -5,7 +5,6 @@ import {
   translate,
   compose,
   applyToPoint,
-  inverse,
 } from "transformation-matrix"
 import { useCallback, useEffect, useReducer, useRef, useState } from "react"
 
@@ -16,8 +15,6 @@ interface Props {
   transform?: Matrix
   initialTransform?: Matrix
   onSetTransform?: (transform: Matrix) => void
-  minScale?: number
-  maxScale?: number
 }
 
 export const useMouseMatrixTransform = (props: Props = {}) => {
@@ -30,12 +27,6 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
   const [waitCounter, setWaitCounter] = useState(0)
   const [extChangeCounter, incExtChangeCounter] = useReducer((s) => s + 1, 0)
   const containerBoundsRef = useRef<DOMRect | null>(null)
-  const lastWheelEventRef = useRef<number>(0)
-  const accumulatedDeltaRef = useRef<number>(0)
-
-  // Default scale limits
-  const minScale = props.minScale ?? 0.1
-  const maxScale = props.maxScale ?? 5
 
   const setTransform = useCallback(
     (newTransform: Matrix) => {
@@ -46,7 +37,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         setInternalTransform(newTransform)
       }
     },
-    [props.onSetTransform, setInternalTransform]
+    [props.onSetTransform]
   )
 
   const setTransformExt = useCallback(
@@ -95,10 +86,6 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       }
     }
 
-    const getCurrentScale = (matrix: Matrix) => {
-      return Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b)
-    }
-
     function handleMouseDown(e: MouseEvent) {
       m0 = getMousePos(e)
       if (Date.now() - lastDragCancelTime < 100) return
@@ -115,16 +102,14 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         canvasElm.style.cursor = "grab"
       }
       m1 = getMousePos(e)
-
+      
       const dragDelta = {
         x: m1.x - m0.x,
         y: m1.y - m0.y
       }
 
-      // Apply scale-adjusted translation
-      const currentScale = getCurrentScale(init_tf)
       const new_tf = compose(
-        translate(dragDelta.x / currentScale, dragDelta.y / currentScale),
+        translate(dragDelta.x, dragDelta.y),
         init_tf
       )
       
@@ -143,11 +128,9 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         y: m1.y - m0.y
       }
 
-      // Apply scale-adjusted translation
-      const currentScale = getCurrentScale(init_tf)
       setTransform(
         compose(
-          translate(dragDelta.x / currentScale, dragDelta.y / currentScale),
+          translate(dragDelta.x, dragDelta.y),
           init_tf
         )
       )
@@ -155,31 +138,10 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
     function handleMouseWheel(e: WheelEvent) {
       e.preventDefault()
-
-      const now = Date.now()
       const mousePos = getMousePos(e)
-      
-      // Accumulate delta with decay
-      if (now - lastWheelEventRef.current > 50) {
-        accumulatedDeltaRef.current = 0
-      }
-      accumulatedDeltaRef.current += e.deltaY
-      lastWheelEventRef.current = now
+      const delta = -e.deltaY * 0.001
+      const scaleFactor = Math.exp(delta)
 
-      const smoothFactor = -0.0007
-      const scaleFactor = Math.exp(accumulatedDeltaRef.current * smoothFactor)
-      
-      // current scale and calculate for new scale
-      const currentScale = getCurrentScale(init_tf)
-      const newScale = currentScale * scaleFactor
-
-      // scale bounds
-      if (newScale < minScale || newScale > maxScale) {
-        accumulatedDeltaRef.current = 0
-        return
-      }
-
-      // Calculate new transform
       const new_tf = compose(
         translate(mousePos.x, mousePos.y),
         scale(scaleFactor, scaleFactor),
@@ -216,9 +178,8 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         y: m1.y - m0.y
       }
 
-      const currentScale = getCurrentScale(init_tf)
       const new_tf = compose(
-        translate(dragDelta.x / currentScale, dragDelta.y / currentScale),
+        translate(dragDelta.x, dragDelta.y),
         init_tf
       )
       
@@ -239,7 +200,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       canvasElm.removeEventListener("mouseout", handleMouseOut)
       canvasElm.removeEventListener("wheel", handleMouseWheel)
     }
-  }, [outerCanvasElm, waitCounter, extChangeCounter, lastDragCancelTime, minScale, maxScale])
+  }, [outerCanvasElm, waitCounter, extChangeCounter, lastDragCancelTime])
 
   const applyTransformToPoint = useCallback(
     (obj: Point | [number, number]) => applyToPoint(transform, obj),
