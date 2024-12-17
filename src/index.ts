@@ -15,6 +15,7 @@ interface Props {
   transform?: Matrix
   initialTransform?: Matrix
   onSetTransform?: (transform: Matrix) => any
+  enabled?: boolean
 }
 
 export const useMouseMatrixTransform = (props: Props = {}) => {
@@ -82,13 +83,14 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     }
 
     function handleMouseDown(e: MouseEvent) {
+      if (props.enabled === false) return
       m0 = getMousePos(e)
       if (Date.now() - lastDragCancelTime < 100) return
       md = true
       e.preventDefault()
     }
     function handleMouseUp(e: MouseEvent) {
-      if (!md) return
+      if (!md || props.enabled === false) return
       m1 = getMousePos(e)
 
       const new_tf = compose(translate(m1.x - m0.x, m1.y - m0.y), init_tf)
@@ -99,12 +101,13 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     }
     function handleMouseMove(e: MouseEvent) {
       mlastrel = getMousePos(e)
-      if (!md) return
+      if (!md || props.enabled === false) return
       m1 = getMousePos(e)
 
       setTransform(compose(translate(m1.x - m0.x, m1.y - m0.y), init_tf))
     }
     function handleMouseWheel(e: WheelEvent) {
+      if (props.enabled === false) return
       const center = getMousePos(e)
       const new_tf = compose(
         translate(center.x, center.y),
