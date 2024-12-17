@@ -2,7 +2,7 @@
 
 [Online Preview](https://use-mouse-matrix-transform.vercel.app)
 
-Easily create draggable, zoomable layouts (maps, svg explorers, canvas dragging, etc.)
+React hook for to easily create draggable, zoomable layouts (maps, svg explorers, canvas dragging, etc.)
 
 Allows you to easily create map-like interactions with a canvas element, this
 library gives you flexibility in what context you use the transformations because
