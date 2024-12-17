@@ -16,6 +16,7 @@ interface Props {
   initialTransform?: Matrix
   onSetTransform?: (transform: Matrix) => any
   enabled?: boolean
+  shouldDrag?: (e: MouseEvent) => boolean
 }
 
 export const useMouseMatrixTransform = (props: Props = {}) => {
@@ -84,6 +85,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
     function handleMouseDown(e: MouseEvent) {
       if (props.enabled === false) return
+      if (props.shouldDrag && !props.shouldDrag(e)) return
       m0 = getMousePos(e)
       if (Date.now() - lastDragCancelTime < 100) return
       md = true
@@ -91,6 +93,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     }
     function handleMouseUp(e: MouseEvent) {
       if (!md || props.enabled === false) return
+      if (props.shouldDrag && !props.shouldDrag(e)) return
       m1 = getMousePos(e)
 
       const new_tf = compose(translate(m1.x - m0.x, m1.y - m0.y), init_tf)
@@ -102,12 +105,14 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     function handleMouseMove(e: MouseEvent) {
       mlastrel = getMousePos(e)
       if (!md || props.enabled === false) return
+      if (props.shouldDrag && !props.shouldDrag(e)) return
       m1 = getMousePos(e)
 
       setTransform(compose(translate(m1.x - m0.x, m1.y - m0.y), init_tf))
     }
     function handleMouseWheel(e: WheelEvent) {
       if (props.enabled === false) return
+      if (props.shouldDrag && !props.shouldDrag(e)) return
       const center = getMousePos(e)
       const new_tf = compose(
         translate(center.x, center.y),
@@ -121,6 +126,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     }
     function handleMouseOut(e: MouseEvent) {
       if (!md) return
+      if (props.shouldDrag && !props.shouldDrag(e)) return
 
       // If the mouseout occurs in the bounding box of the canvasElm, it's
       // defocusing on internal elements, so we should ignore it
@@ -157,7 +163,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       canvasElm.removeEventListener("mouseout", handleMouseOut)
       canvasElm.removeEventListener("wheel", handleMouseWheel)
     }
-  }, [outerCanvasElm, waitCounter, extChangeCounter, lastDragCancelTime, props.enabled])
+  }, [outerCanvasElm, waitCounter, extChangeCounter, lastDragCancelTime, props.enabled, props.shouldDrag])
 
   const applyTransformToPoint = useCallback(
     (obj: Point | [number, number]) => applyToPoint(transform, obj),
