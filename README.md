@@ -21,8 +21,9 @@ npm add --save use-mouse-matrix-transform
 |      Name      |    Type     | Required | Default | Description                                     |
 | :------------: | :---------: | :------: | :-----: | ----------------------------------------------- |
 |   canvasElm    | HTMLElement |   true   |         | The element that mouse events will be bound on. |
-|   transform    |   Matrix    |  false   |         |                                                 |
-| onSetTransform |   Matrix    |  false   |         |                                                 |
+|   transform    |   Matrix    |  false   |         | External transform matrix to control component.  |
+| onSetTransform |  Function   |  false   |         | Callback when transform matrix changes.         |
+|    enabled     |  boolean    |  false   |  true   | When false, disables all matrix transformations.|
 
 `useMouseMatrixTransform` returns an object with the following properties:
 
