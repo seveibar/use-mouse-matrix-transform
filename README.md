@@ -2,7 +2,7 @@
 
 [Online Preview](https://use-mouse-matrix-transform.vercel.app)
 
-Easily create draggable, zoomable layouts (maps, svg explorers, canvas dragging, etc.)
+React hook for to easily create draggable, zoomable layouts (maps, svg explorers, canvas dragging, etc.)
 
 Allows you to easily create map-like interactions with a canvas element, this
 library gives you flexibility in what context you use the transformations because
@@ -21,8 +21,9 @@ npm add --save use-mouse-matrix-transform
 |      Name      |    Type     | Required | Default | Description                                     |
 | :------------: | :---------: | :------: | :-----: | ----------------------------------------------- |
 |   canvasElm    | HTMLElement |   true   |         | The element that mouse events will be bound on. |
-|   transform    |   Matrix    |  false   |         |                                                 |
-| onSetTransform |   Matrix    |  false   |         |                                                 |
+|   transform    |   Matrix    |  false   |         | External transform matrix to control component. |
+| onSetTransform |  Function   |  false   |         | Callback when transform matrix changes.         |
+|    enabled     |  boolean    |  false   |  true   | When false, disables mouse events.              |
 
 `useMouseMatrixTransform` returns an object with the following properties:
 
