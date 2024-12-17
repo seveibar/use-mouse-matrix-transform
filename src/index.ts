@@ -157,7 +157,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       canvasElm.removeEventListener("mouseout", handleMouseOut)
       canvasElm.removeEventListener("wheel", handleMouseWheel)
     }
-  }, [outerCanvasElm, waitCounter, extChangeCounter, lastDragCancelTime])
+  }, [outerCanvasElm, waitCounter, extChangeCounter, lastDragCancelTime, props.enabled])
 
   const applyTransformToPoint = useCallback(
     (obj: Point | [number, number]) => applyToPoint(transform, obj),
