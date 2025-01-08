@@ -1,4 +1,4 @@
-# useMouseMatrixTransform
+# use-mouse-matrix-transform
 
 [Online Preview](https://use-mouse-matrix-transform.vercel.app) ⋅ [tscircuit](https://github.com/tscircuit/tscircuit)
 
