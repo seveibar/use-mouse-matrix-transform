@@ -10,8 +10,8 @@
     "incremental": false,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": false,
     "isolatedModules": true,
     "jsx": "preserve",
     "baseUrl": "./src"
