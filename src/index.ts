@@ -150,17 +150,17 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       init_tf = new_tf
     }
 
-    canvasElm.addEventListener("mousedown", handleMouseDown)
-    canvasElm.addEventListener("mouseup", handleMouseUp)
-    window.addEventListener("mousemove", handleMouseMove)
-    canvasElm.addEventListener("mouseout", handleMouseOut)
+    canvasElm.addEventListener("pointerdown", handleMouseDown)
+    canvasElm.addEventListener("pointerup", handleMouseUp)
+    window.addEventListener("pointermove", handleMouseMove)
+    canvasElm.addEventListener("pointerout", handleMouseOut)
     canvasElm.addEventListener("wheel", handleMouseWheel)
 
     return () => {
-      canvasElm.removeEventListener("mousedown", handleMouseDown)
-      canvasElm.removeEventListener("mouseup", handleMouseUp)
-      window.removeEventListener("mousemove", handleMouseMove)
-      canvasElm.removeEventListener("mouseout", handleMouseOut)
+      canvasElm.removeEventListener("pointerdown", handleMouseDown)
+      canvasElm.removeEventListener("pointerup", handleMouseUp)
+      window.removeEventListener("pointermove", handleMouseMove)
+      canvasElm.removeEventListener("pointerout", handleMouseOut)
       canvasElm.removeEventListener("wheel", handleMouseWheel)
     }
   }, [outerCanvasElm, waitCounter, extChangeCounter, lastDragCancelTime, props.enabled, props.shouldDrag])
