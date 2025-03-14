@@ -28,11 +28,11 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
   )
   const [waitCounter, setWaitCounter] = useState(0)
   const [extChangeCounter, incExtChangeCounter] = useReducer((s) => s + 1, 0)
-  const transformRef = useRef<Matrix>(props.transform ?? identity())
+  // const transformRef = useRef<Matrix>(props.transform ?? identity())
 
   const setTransform = useCallback(
     (newTransform: Matrix) => {
-      transformRef.current = newTransform
+      // transformRef.current = newTransform
       if (props.onSetTransform) {
         props.onSetTransform(newTransform)
       }
@@ -40,7 +40,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         setInternalTransform(newTransform)
       }
     },
-    [props.onSetTransform, setInternalTransform, props.transform]
+    [props.onSetTransform, setInternalTransform ]
   )
 
   const setTransformExt = useCallback(
@@ -62,7 +62,6 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
   const pinchDataRef = useRef<{
     initialDistance: number
     initialMidpoint: { x: number; y: number }
-    initialTransform: Matrix
   } | null>(null)
 
   useEffect(() => {
@@ -161,14 +160,13 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     }
 
     function handleTouchStart(e: TouchEvent) {
+      e.preventDefault()
       if (props.enabled === false) return
       if (e.touches.length === 1) {
         gestureModeRef.current = "drag"
         const touch = e.touches[0]
-        console.log('touch: ', touch)
         lastTouchRef.current = { x: touch.clientX, y: touch.clientY }
       } else if (e.touches.length === 2) {
-        console.log('pinch')
         gestureModeRef.current = "pinch"
         const touch1 = e.touches[0]
         const touch2 = e.touches[1]
@@ -182,13 +180,12 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         pinchDataRef.current = {
           initialDistance: distance,
           initialMidpoint: midpoint,
-          initialTransform: transformRef.current,
         }
       }
-      e.preventDefault()
     }
 
     function handleTouchMove(e: TouchEvent) {
+      e.preventDefault()
       if (props.enabled === false) return
       if (
         gestureModeRef.current === "drag" &&
@@ -199,45 +196,41 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         const deltaX = touch.clientX - lastTouchRef.current.x
         const deltaY = touch.clientY - lastTouchRef.current.y
 
-        requestAnimationFrame(() => {
-          const newTransform = { ...transformRef.current, e: transformRef.current.e + deltaX, f: transformRef.current.f + deltaY }
-          setTransform(newTransform)
-        })
-
+        const new_tf = { ...init_tf, e: init_tf.e + deltaX, f: init_tf.f + deltaY }
+        setTransform(new_tf)
+        init_tf = new_tf
         lastTouchRef.current = { x: touch.clientX, y: touch.clientY }
       } else if (
         gestureModeRef.current === "pinch" &&
         e.touches.length === 2 &&
         pinchDataRef.current
       ) {
-        console.log('pinch')
         const touch1 = e.touches[0]
         const touch2 = e.touches[1]
         const dx = touch2.clientX - touch1.clientX
         const dy = touch2.clientY - touch1.clientY
         const newDistance = Math.hypot(dx, dy)
-        const { initialDistance, initialMidpoint, initialTransform } = pinchDataRef.current
-        const scaleFactor = newDistance / initialDistance
+        const { initialDistance, initialMidpoint } = pinchDataRef.current
+        const scaleFactor = 1 + (newDistance / initialDistance - 1) * 0.07
 
-        requestAnimationFrame(() => {
-          const newTransform = compose(
-            translate(initialMidpoint.x, initialMidpoint.y),
-            scale(scaleFactor, scaleFactor),
-            translate(-initialMidpoint.x, -initialMidpoint.y),
-            initialTransform
-          )
-          setTransform(newTransform)
-        })
+        const new_tf = compose(
+          translate(initialMidpoint.x, initialMidpoint.y),
+          scale(scaleFactor, scaleFactor),
+          translate(-initialMidpoint.x, -initialMidpoint.y),
+          init_tf
+        )
+        setTransform(new_tf)
+        init_tf = new_tf
       }
     }
 
     function handleTouchEnd(e: TouchEvent) {
+      e.preventDefault()
       if (e.touches.length === 0) {
         gestureModeRef.current = "none"
         lastTouchRef.current = null
         pinchDataRef.current = null
       }
-      e.preventDefault()
     }
 
     canvasElm.addEventListener("mousedown", handleMouseDown)
@@ -269,16 +262,17 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
      lastDragCancelTime, 
      props.enabled, 
      props.shouldDrag,
+
     ])
 
   const applyTransformToPoint = useCallback(
-    (obj: Point | [number, number]) => applyToPoint(transformRef.current, obj),
+    (obj: Point | [number, number]) => applyToPoint(transform, obj),
     [transform]
   )
 
   return {
     ref: extRef,
-    transform: transformRef.current,
+    transform,
     applyTransformToPoint,
     setTransform: setTransformExt,
     cancelDrag
