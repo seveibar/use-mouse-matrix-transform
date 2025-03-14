@@ -28,11 +28,9 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
   )
   const [waitCounter, setWaitCounter] = useState(0)
   const [extChangeCounter, incExtChangeCounter] = useReducer((s) => s + 1, 0)
-  // const transformRef = useRef<Matrix>(props.transform ?? identity())
 
   const setTransform = useCallback(
     (newTransform: Matrix) => {
-      // transformRef.current = newTransform
       if (props.onSetTransform) {
         props.onSetTransform(newTransform)
       }
