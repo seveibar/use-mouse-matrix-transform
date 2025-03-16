@@ -209,7 +209,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         const dy = touch2.clientY - touch1.clientY
         const newDistance = Math.hypot(dx, dy)
         const { initialDistance, initialMidpoint } = pinchDataRef.current
-        const scaleFactor = 1 + (newDistance / initialDistance - 1) * 0.07
+        const scaleFactor = Math.pow((newDistance / initialDistance), 0.1);
 
         const new_tf = compose(
           translate(initialMidpoint.x, initialMidpoint.y),
