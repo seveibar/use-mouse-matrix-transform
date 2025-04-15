@@ -1,11 +1,12 @@
 import {
   Matrix,
   identity,
-  scale,
   translate,
   compose,
   applyToPoint,
+  scale,
 } from "transformation-matrix"
+import { fromTwoMovingPoints } from "transformation-matrix"
 import { useCallback, useEffect, useReducer, useRef, useState } from "react"
 
 type Point = { x: number; y: number }
@@ -16,7 +17,7 @@ interface Props {
   initialTransform?: Matrix
   onSetTransform?: (transform: Matrix) => any
   enabled?: boolean
-  shouldDrag?: (e: MouseEvent) => boolean
+  shouldDrag?: (e: MouseEvent | TouchEvent | WheelEvent) => boolean
 }
 
 export const useMouseMatrixTransform = (props: Props = {}) => {
@@ -38,7 +39,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         setInternalTransform(newTransform)
       }
     },
-    [props.onSetTransform, setInternalTransform ]
+    [props.onSetTransform, setInternalTransform]
   )
 
   const setTransformExt = useCallback(
@@ -58,15 +59,14 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
   const gestureModeRef = useRef<"none" | "drag" | "pinch">("none")
   const lastTouchRef = useRef<{ x: number; y: number } | null>(null)
   const pinchDataRef = useRef<{
-    initialDistance: number
-    initialMidpoint: { x: number; y: number }
+    touch1: { x: number; y: number }
+    touch2: { x: number; y: number }
   } | null>(null)
 
   useEffect(() => {
     const canvasElm: HTMLCanvasElement | null =
       props.canvasElm ?? extRef.current
     if (canvasElm && !outerCanvasElm) {
-      // Always re-render when the canvas element is known
       setWaitCounter(waitCounter + 1)
       return
     }
@@ -114,7 +114,6 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       if (!md || props.enabled === false) return
       if (props.shouldDrag && !props.shouldDrag(e)) return
       m1 = getMousePos(e)
-
       setTransform(compose(translate(m1.x - m0.x, m1.y - m0.y), init_tf))
     }
     function handleMouseWheel(e: WheelEvent) {
@@ -135,8 +134,6 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       if (!md) return
       if (props.shouldDrag && !props.shouldDrag(e)) return
 
-      // If the mouseout occurs in the bounding box of the canvasElm, it's
-      // defocusing on internal elements, so we should ignore it
       if (canvasElm) {
         const boundingBox = canvasElm.getBoundingClientRect()
         if (
@@ -151,7 +148,6 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
       md = false
       m1 = getMousePos(e)
-
       const new_tf = compose(translate(m1.x - m0.x, m1.y - m0.y), init_tf)
       setTransform(new_tf)
       init_tf = new_tf
@@ -168,22 +164,16 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         gestureModeRef.current = "pinch"
         const touch1 = e.touches[0]
         const touch2 = e.touches[1]
-        const dx = touch2.clientX - touch1.clientX
-        const dy = touch2.clientY - touch1.clientY
-        const distance = Math.hypot(dx, dy)
-        const midpoint = {
-          x: (touch1.clientX + touch2.clientX) / 2,
-          y: (touch1.clientY + touch2.clientY) / 2,
-        }
         pinchDataRef.current = {
-          initialDistance: distance,
-          initialMidpoint: midpoint,
+          touch1: { x: touch1.clientX, y: touch1.clientY },
+          touch2: { x: touch2.clientX, y: touch2.clientY },
         }
       }
     }
 
     function handleTouchMove(e: TouchEvent) {
       e.preventDefault()
+      if (!props.transform) return
       if (props.enabled === false) return
       if (
         gestureModeRef.current === "drag" &&
@@ -193,10 +183,12 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         const touch = e.touches[0]
         const deltaX = touch.clientX - lastTouchRef.current.x
         const deltaY = touch.clientY - lastTouchRef.current.y
-
-        const new_tf = { ...init_tf, e: init_tf.e + deltaX, f: init_tf.f + deltaY }
+        const new_tf = {
+          ...props.transform,
+          e: props.transform.e + deltaX,
+          f: props.transform.f + deltaY,
+        }
         setTransform(new_tf)
-        init_tf = new_tf
         lastTouchRef.current = { x: touch.clientX, y: touch.clientY }
       } else if (
         gestureModeRef.current === "pinch" &&
@@ -205,20 +197,26 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       ) {
         const touch1 = e.touches[0]
         const touch2 = e.touches[1]
-        const dx = touch2.clientX - touch1.clientX
-        const dy = touch2.clientY - touch1.clientY
-        const newDistance = Math.hypot(dx, dy)
-        const { initialDistance, initialMidpoint } = pinchDataRef.current
-        const scaleFactor = 1 + (newDistance / initialDistance - 1) * 0.07
 
-        const new_tf = compose(
-          translate(initialMidpoint.x, initialMidpoint.y),
-          scale(scaleFactor, scaleFactor),
-          translate(-initialMidpoint.x, -initialMidpoint.y),
-          init_tf
+        const initialTouch1 = pinchDataRef.current.touch1
+        const initialTouch2 = pinchDataRef.current.touch2
+
+        const currentTouch1 = { x: touch1.clientX, y: touch1.clientY }
+        const currentTouch2 = { x: touch2.clientX, y: touch2.clientY }
+
+        const pinchTransform = fromTwoMovingPoints(
+          initialTouch1,
+          initialTouch2,
+          currentTouch1,
+          currentTouch2
         )
-        setTransform(new_tf)
-        init_tf = new_tf
+
+        // Remove rotation and skew from the pinch transformation
+        pinchTransform.b = 0
+        pinchTransform.c = 0
+
+        const composed_tf = compose(pinchTransform, props.transform)
+        setTransform(composed_tf)
       }
     }
 
@@ -237,10 +235,14 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     canvasElm.addEventListener("mouseout", handleMouseOut)
     canvasElm.addEventListener("wheel", handleMouseWheel)
 
-    canvasElm.addEventListener("touchstart", handleTouchStart, { passive: false })
+    canvasElm.addEventListener("touchstart", handleTouchStart, {
+      passive: false,
+    })
     canvasElm.addEventListener("touchmove", handleTouchMove, { passive: false })
     canvasElm.addEventListener("touchend", handleTouchEnd, { passive: false })
-    canvasElm.addEventListener("touchcancel", handleTouchEnd, { passive: false })
+    canvasElm.addEventListener("touchcancel", handleTouchEnd, {
+      passive: false,
+    })
 
     return () => {
       canvasElm.removeEventListener("mousedown", handleMouseDown)
@@ -254,14 +256,15 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       canvasElm.removeEventListener("touchend", handleTouchEnd)
       canvasElm.removeEventListener("touchcancel", handleTouchEnd)
     }
-  }, [outerCanvasElm,
-     waitCounter,
-     extChangeCounter, 
-     lastDragCancelTime, 
-     props.enabled, 
-     props.shouldDrag,
-
-    ])
+  }, [
+    outerCanvasElm,
+    waitCounter,
+    extChangeCounter,
+    lastDragCancelTime,
+    props.enabled,
+    props.transform,
+    props.shouldDrag,
+  ])
 
   const applyTransformToPoint = useCallback(
     (obj: Point | [number, number]) => applyToPoint(transform, obj),
@@ -273,7 +276,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     transform,
     applyTransformToPoint,
     setTransform: setTransformExt,
-    cancelDrag
+    cancelDrag,
   }
 }
 

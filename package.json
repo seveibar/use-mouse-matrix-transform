@@ -29,6 +29,6 @@
     "react": "^18.2.0"
   },
   "dependencies": {
-    "transformation-matrix": "^2.14.0"
+    "transformation-matrix": "^3.0.0"
   }
 }
