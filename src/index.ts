@@ -1,12 +1,11 @@
 import {
   Matrix,
   identity,
+  scale,
   translate,
   compose,
   applyToPoint,
-  scale,
 } from "transformation-matrix"
-import { fromTwoMovingPoints } from "transformation-matrix"
 import { useCallback, useEffect, useReducer, useRef, useState } from "react"
 
 type Point = { x: number; y: number }
@@ -17,7 +16,7 @@ interface Props {
   initialTransform?: Matrix
   onSetTransform?: (transform: Matrix) => any
   enabled?: boolean
-  shouldDrag?: (e: MouseEvent | TouchEvent | WheelEvent) => boolean
+  shouldDrag?: (e: MouseEvent) => boolean
 }
 
 export const useMouseMatrixTransform = (props: Props = {}) => {
@@ -67,6 +66,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     const canvasElm: HTMLCanvasElement | null =
       props.canvasElm ?? extRef.current
     if (canvasElm && !outerCanvasElm) {
+      // Always re-render when the canvas element is known
       setWaitCounter(waitCounter + 1)
       return
     }
@@ -114,6 +114,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       if (!md || props.enabled === false) return
       if (props.shouldDrag && !props.shouldDrag(e)) return
       m1 = getMousePos(e)
+
       setTransform(compose(translate(m1.x - m0.x, m1.y - m0.y), init_tf))
     }
     function handleMouseWheel(e: WheelEvent) {
@@ -134,6 +135,8 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       if (!md) return
       if (props.shouldDrag && !props.shouldDrag(e)) return
 
+      // If the mouseout occurs in the bounding box of the canvasElm, it's
+      // defocusing on internal elements, so we should ignore it
       if (canvasElm) {
         const boundingBox = canvasElm.getBoundingClientRect()
         if (
@@ -148,6 +151,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
       md = false
       m1 = getMousePos(e)
+
       const new_tf = compose(translate(m1.x - m0.x, m1.y - m0.y), init_tf)
       setTransform(new_tf)
       init_tf = new_tf
@@ -183,6 +187,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         const touch = e.touches[0]
         const deltaX = touch.clientX - lastTouchRef.current.x
         const deltaY = touch.clientY - lastTouchRef.current.y
+
         const new_tf = {
           ...props.transform,
           e: props.transform.e + deltaX,
@@ -204,18 +209,28 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         const currentTouch1 = { x: touch1.clientX, y: touch1.clientY }
         const currentTouch2 = { x: touch2.clientX, y: touch2.clientY }
 
-        const pinchTransform = fromTwoMovingPoints(
-          initialTouch1,
-          initialTouch2,
-          currentTouch1,
-          currentTouch2
+        const center = {
+          x: (currentTouch1.x + currentTouch2.x) / 2,
+          y: (currentTouch1.y + currentTouch2.y) / 2,
+        }
+
+        const initialDistance = Math.hypot(
+          initialTouch2.x - initialTouch1.x,
+          initialTouch2.y - initialTouch1.y
+        )
+        const currentDistance = Math.hypot(
+          currentTouch2.x - currentTouch1.x,
+          currentTouch2.y - currentTouch1.y
+        )
+        const scaleFactor = currentDistance / initialDistance
+
+        const composed_tf = compose(
+          translate(center.x, center.y),
+          scale(scaleFactor, scaleFactor),
+          translate(-center.x, -center.y),
+          props.transform
         )
 
-        // Remove rotation and skew from the pinch transformation
-        pinchTransform.b = 0
-        pinchTransform.c = 0
-
-        const composed_tf = compose(pinchTransform, props.transform)
         setTransform(composed_tf)
       }
     }
