@@ -279,7 +279,6 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     extChangeCounter,
     lastDragCancelTime,
     props.enabled,
-    // props.transform,
     props.shouldDrag,
   ])
 
