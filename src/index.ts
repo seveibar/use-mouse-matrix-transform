@@ -189,11 +189,12 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         const deltaY = touch.clientY - lastTouchRef.current.y
 
         const new_tf = {
-          ...props.transform,
-          e: props.transform.e + deltaX,
-          f: props.transform.f + deltaY,
+          ...init_tf,
+          e: init_tf.e + deltaX,
+          f: init_tf.f + deltaY,
         }
         setTransform(new_tf)
+        init_tf = new_tf
         lastTouchRef.current = { x: touch.clientX, y: touch.clientY }
       } else if (
         gestureModeRef.current === "pinch" &&
@@ -228,10 +229,11 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
           translate(center.x, center.y),
           scale(scaleFactor, scaleFactor),
           translate(-center.x, -center.y),
-          props.transform
+          init_tf
         )
 
         setTransform(composed_tf)
+        init_tf = composed_tf
       }
     }
 
@@ -277,7 +279,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     extChangeCounter,
     lastDragCancelTime,
     props.enabled,
-    props.transform,
+    // props.transform,
     props.shouldDrag,
   ])
 
