@@ -177,7 +177,6 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
     function handleTouchMove(e: TouchEvent) {
       e.preventDefault()
-      if (!props.transform) return
       if (props.enabled === false) return
       if (
         gestureModeRef.current === "drag" &&
@@ -252,14 +251,10 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     canvasElm.addEventListener("mouseout", handleMouseOut)
     canvasElm.addEventListener("wheel", handleMouseWheel)
 
-    canvasElm.addEventListener("touchstart", handleTouchStart, {
-      passive: false,
-    })
-    canvasElm.addEventListener("touchmove", handleTouchMove, { passive: false })
-    canvasElm.addEventListener("touchend", handleTouchEnd, { passive: false })
-    canvasElm.addEventListener("touchcancel", handleTouchEnd, {
-      passive: false,
-    })
+    canvasElm.addEventListener("touchstart", handleTouchStart)
+    canvasElm.addEventListener("touchmove", handleTouchMove)
+    canvasElm.addEventListener("touchend", handleTouchEnd)
+    canvasElm.addEventListener("touchcancel", handleTouchEnd)
 
     return () => {
       canvasElm.removeEventListener("mousedown", handleMouseDown)
