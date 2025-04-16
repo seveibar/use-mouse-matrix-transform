@@ -222,7 +222,9 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
           currentTouch2.x - currentTouch1.x,
           currentTouch2.y - currentTouch1.y
         )
-        const scaleFactor = currentDistance / initialDistance
+
+        const dampingFactor = 0.05
+        const scaleFactor = 1 + (currentDistance / initialDistance - 1) * dampingFactor
 
         const composed_tf = compose(
           translate(center.x, center.y),
