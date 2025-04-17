@@ -25,7 +25,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
   const [lastDragCancelTime, setLastDragCancelTime] = useState(0)
   const outerCanvasElm = props.canvasElm ?? extRef.current
   const [internalTransform, setInternalTransform] = useState<Matrix>(
-    props.initialTransform ?? identity()
+    props.initialTransform ?? identity(),
   )
   const [waitCounter, setWaitCounter] = useState(0)
   const [extChangeCounter, incExtChangeCounter] = useReducer((s) => s + 1, 0)
@@ -39,7 +39,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         setInternalTransform(newTransform)
       }
     },
-    [props.onSetTransform, setInternalTransform]
+    [props.onSetTransform, setInternalTransform],
   )
 
   const setTransformExt = useCallback(
@@ -47,7 +47,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       setTransform(newTransform)
       incExtChangeCounter()
     },
-    [setTransform]
+    [setTransform],
   )
 
   const transform = props.transform ?? internalTransform
@@ -114,7 +114,8 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       if (!md || props.enabled === false) return
       if (props.shouldDrag && !props.shouldDrag(e)) return
       m1 = getMousePos(e)
-      setTransform(compose(translate(m1.x - m0.x, m1.y - m0.y), init_tf))
+      const new_tf = compose(translate(m1.x - m0.x, m1.y - m0.y), init_tf)
+      setTransform(new_tf)
     }
     function handleMouseWheel(e: WheelEvent) {
       if (props.enabled === false) return
@@ -124,7 +125,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         translate(center.x, center.y),
         scale(1 - e.deltaY / 1000, 1 - e.deltaY / 1000),
         translate(-center.x, -center.y),
-        init_tf
+        init_tf,
       )
       setTransform(new_tf)
       init_tf = new_tf
@@ -173,23 +174,17 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
     function handleTouchMove(e: TouchEvent) {
       e.preventDefault()
-      if (!props.transform) return
       if (props.enabled === false) return
       if (
         gestureModeRef.current === "drag" &&
         e.touches.length === 1 &&
         lastTouchRef.current
       ) {
-        const touch = e.touches[0]
-        const deltaX = touch.clientX - lastTouchRef.current.x
-        const deltaY = touch.clientY - lastTouchRef.current.y
-        const new_tf = {
-          ...props.transform,
-          e: props.transform.e + deltaX,
-          f: props.transform.f + deltaY,
-        }
-        setTransform(new_tf)
-        lastTouchRef.current = { x: touch.clientX, y: touch.clientY }
+        // const touch = e.touches[0];
+        // const deltaX = touch.clientX - lastTouchRef.current.x;
+        // const deltaY = touch.clientY - lastTouchRef.current.y;
+        // setTransform(compose(translate(deltaX, deltaY), init_tf));
+        // lastTouchRef.current = { x: touch.clientX, y: touch.clientY };
       } else if (
         gestureModeRef.current === "pinch" &&
         e.touches.length === 2 &&
@@ -198,25 +193,50 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         const touch1 = e.touches[0]
         const touch2 = e.touches[1]
 
+        // initial positions when pinch began
         const initialTouch1 = pinchDataRef.current.touch1
         const initialTouch2 = pinchDataRef.current.touch2
 
+        // current positions
         const currentTouch1 = { x: touch1.clientX, y: touch1.clientY }
         const currentTouch2 = { x: touch2.clientX, y: touch2.clientY }
 
-        const pinchTransform = fromTwoMovingPoints(
-          initialTouch1,
-          initialTouch2,
-          currentTouch1,
-          currentTouch2
+        // centers
+        const initialCenter = {
+          x: (initialTouch1.x + initialTouch2.x) / 2,
+          y: (initialTouch1.y + initialTouch2.y) / 2,
+        }
+        const currentCenter = {
+          x: (currentTouch1.x + currentTouch2.x) / 2,
+          y: (currentTouch1.y + currentTouch2.y) / 2,
+        }
+
+        // distances
+        const initialDist = Math.hypot(
+          initialTouch2.x - initialTouch1.x,
+          initialTouch2.y - initialTouch1.y,
+        )
+        const currentDist = Math.hypot(
+          currentTouch2.x - currentTouch1.x,
+          currentTouch2.y - currentTouch1.y,
         )
 
-        // Remove rotation and skew from the pinch transformation
-        pinchTransform.b = 0
-        pinchTransform.c = 0
+        // zoom factor
+        const s = currentDist / initialDist
 
-        const composed_tf = compose(pinchTransform, props.transform)
-        setTransform(composed_tf)
+        // build the pure pan+zoom matrix
+        const pinchTransform = compose(
+          // 1) move origin to current center
+          translate(currentCenter.x, currentCenter.y),
+          // 2) scale
+          scale(s, s),
+          // 3) move back by initial center
+          translate(-initialCenter.x, -initialCenter.y),
+          // 4) apply the transform you had before pinch
+          transform, // Use current transform instead of init_tf
+        )
+
+        setTransform(pinchTransform)
       }
     }
 
@@ -238,7 +258,9 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     canvasElm.addEventListener("touchstart", handleTouchStart, {
       passive: false,
     })
-    canvasElm.addEventListener("touchmove", handleTouchMove, { passive: false })
+    canvasElm.addEventListener("touchmove", handleTouchMove, {
+      passive: false,
+    })
     canvasElm.addEventListener("touchend", handleTouchEnd, { passive: false })
     canvasElm.addEventListener("touchcancel", handleTouchEnd, {
       passive: false,
@@ -268,7 +290,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
   const applyTransformToPoint = useCallback(
     (obj: Point | [number, number]) => applyToPoint(transform, obj),
-    [transform]
+    [transform],
   )
 
   return {
