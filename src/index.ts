@@ -58,7 +58,11 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
   }, [])
 
   const gestureModeRef = useRef<"none" | "drag" | "pinch">("none")
-  const lastTouchRef = useRef<{ x: number; y: number } | null>(null)
+  // const lastTouchRef = useRef<{ x: number; y: number } | null>(null) // No longer needed for delta calculation
+  const dragDataRef = useRef<{
+    initialTransform: Matrix
+    initialTouch: Point
+  } | null>(null)
   const pinchDataRef = useRef<{
     initialTransform: Matrix
     initialTouch1: Point
@@ -162,10 +166,15 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       e.preventDefault()
       if (props.enabled === false) return
       if (e.touches.length === 1) {
+        // Start Drag
         gestureModeRef.current = "drag"
         const touch = e.touches[0]
-        lastTouchRef.current = { x: touch.clientX, y: touch.clientY }
+        dragDataRef.current = {
+          initialTransform: init_tf, // Capture transform before drag starts
+          initialTouch: { x: touch.clientX, y: touch.clientY },
+        }
       } else if (e.touches.length === 2) {
+        // Start Pinch
         gestureModeRef.current = "pinch"
         const touch1 = e.touches[0]
         const touch2 = e.touches[1]
@@ -185,8 +194,21 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       if (
         gestureModeRef.current === "drag" &&
         e.touches.length === 1 &&
-        lastTouchRef.current
+        dragDataRef.current // Check if drag has started
       ) {
+        // Handle Drag Move
+        const touch = e.touches[0]
+        const currentTouch = { x: touch.clientX, y: touch.clientY }
+        const deltaX = currentTouch.x - dragDataRef.current.initialTouch.x
+        const deltaY = currentTouch.y - dragDataRef.current.initialTouch.y
+
+        // Apply delta to the transform that existed *before* the drag started
+        const new_tf = compose(
+          translate(deltaX, deltaY),
+          dragDataRef.current.initialTransform,
+        )
+        setTransform(new_tf)
+        // Do not update init_tf here
       } else if (
         gestureModeRef.current === "pinch" &&
         e.touches.length === 2 &&
@@ -213,12 +235,37 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
     function handleTouchEnd(e: TouchEvent) {
       e.preventDefault()
 
-      // Update init_tf with the final transform from the gesture
-      if (gestureModeRef.current === "pinch" && pinchDataRef.current) {
+      // Use changedTouches to get the final position of the lifted finger(s)
+      const finalTouch = e.changedTouches[0]
+
+      if (
+        gestureModeRef.current === "drag" &&
+        dragDataRef.current && // Check if drag was active
+        finalTouch // Ensure we have the final touch info
+      ) {
+        // Drag End
+        const finalTouchPos = { x: finalTouch.clientX, y: finalTouch.clientY }
+        const deltaX = finalTouchPos.x - dragDataRef.current.initialTouch.x
+        const deltaY = finalTouchPos.y - dragDataRef.current.initialTouch.y
+
+        // Calculate the final transform based on the total delta
+        const new_tf = compose(
+          translate(deltaX, deltaY),
+          dragDataRef.current.initialTransform,
+        )
+        setTransform(new_tf) // Update the visual state
+        init_tf = new_tf // Lock in the transform for the next gesture
+      } else if (gestureModeRef.current === "pinch" && pinchDataRef.current) {
         const new_tf = computePinchTransform(pinchDataRef.current)
-        setTransform(new_tf)
-        init_tf = new_tf
+        setTransform(new_tf) // Ensure the final state is set
+        init_tf = new_tf // Update init_tf
       }
+
+      // Reset gesture state and data refs
+      gestureModeRef.current = "none"
+      // lastTouchRef.current = null // No longer used
+      dragDataRef.current = null
+      pinchDataRef.current = null
     }
 
     canvasElm.addEventListener("mousedown", handleMouseDown)
