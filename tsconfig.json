@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -11,11 +15,17 @@
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "Bundler",
-    "resolveJsonModule": false,
+    "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
     "baseUrl": "./src"
   },
-  "include": ["next-env.d.ts", "**/*.ts", "src/pages/index.tsx"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "src/pages/index.tsx"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
