@@ -187,11 +187,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         const deltaX = touch.clientX - lastTouchRef.current.x
         const deltaY = touch.clientY - lastTouchRef.current.y
 
-        const new_tf = {
-          ...init_tf,
-          e: init_tf.e + deltaX,
-          f: init_tf.f + deltaY,
-        }
+        const new_tf = compose(translate(deltaX, deltaY), init_tf)
         setTransform(new_tf)
         init_tf = new_tf
         lastTouchRef.current = { x: touch.clientX, y: touch.clientY }
@@ -223,12 +219,11 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
           currentTouch2.y - currentTouch1.y
         )
 
-        const dampingFactor = 0.02
-        const scaleFactor = 1 + (currentDistance / initialDistance - 1) * dampingFactor
+        const delta = initialDistance - currentDistance
 
         const composed_tf = compose(
           translate(center.x, center.y),
-          scale(scaleFactor, scaleFactor),
+          scale(1 - delta / 1000, 1 - delta / 1000),
           translate(-center.x, -center.y),
           init_tf
         )
