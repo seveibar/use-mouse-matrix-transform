@@ -61,8 +61,10 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
   const lastTouchRef = useRef<{ x: number; y: number } | null>(null)
   const pinchDataRef = useRef<{
     initialTransform: Matrix
-    touch1: Point
-    touch2: Point
+    initialTouch1: Point
+    initialTouch2: Point
+    finalTouch1: Point | null
+    finalTouch2: Point | null
   } | null>(null)
 
   useEffect(() => {
@@ -169,8 +171,10 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         const touch2 = e.touches[1]
         pinchDataRef.current = {
           initialTransform: init_tf, // Store the transform at the start of the pinch
-          touch1: { x: touch1.clientX, y: touch1.clientY },
-          touch2: { x: touch2.clientX, y: touch2.clientY },
+          initialTouch1: { x: touch1.clientX, y: touch1.clientY },
+          initialTouch2: { x: touch2.clientX, y: touch2.clientY },
+          finalTouch1: null,
+          finalTouch2: null,
         }
       }
     }
@@ -183,11 +187,6 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         e.touches.length === 1 &&
         lastTouchRef.current
       ) {
-        // const touch = e.touches[0];
-        // const deltaX = touch.clientX - lastTouchRef.current.x;
-        // const deltaY = touch.clientY - lastTouchRef.current.y;
-        // setTransform(compose(translate(deltaX, deltaY), init_tf));
-        // lastTouchRef.current = { x: touch.clientX, y: touch.clientY };
       } else if (
         gestureModeRef.current === "pinch" &&
         e.touches.length === 2 &&
@@ -196,15 +195,16 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         const touch1 = e.touches[0]
         const touch2 = e.touches[1]
 
-        const pinchInput = {
-          initialTransform: pinchDataRef.current.initialTransform,
-          initialTouch1: pinchDataRef.current.touch1,
-          initialTouch2: pinchDataRef.current.touch2,
-          currentTouch1: { x: touch1.clientX, y: touch1.clientY },
-          currentTouch2: { x: touch2.clientX, y: touch2.clientY },
+        pinchDataRef.current.finalTouch1 = {
+          x: touch1.clientX,
+          y: touch1.clientY,
+        }
+        pinchDataRef.current.finalTouch2 = {
+          x: touch2.clientX,
+          y: touch2.clientY,
         }
 
-        const new_tf = computePinchTransform(pinchInput)
+        const new_tf = computePinchTransform(pinchDataRef.current)
         setTransform(new_tf)
         // Don't update init_tf here, only on touch end
       }
@@ -214,27 +214,10 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       e.preventDefault()
 
       // Update init_tf with the final transform from the gesture
-      if (gestureModeRef.current === "drag" && lastTouchRef.current) {
-        // Finalize drag transform if needed (though current logic updates init_tf on mouseup)
-        // This part might need adjustment depending on exact drag behavior desired for touch
-      } else if (gestureModeRef.current === "pinch") {
-        // Finalize pinch transform
-        init_tf = transform // Update init_tf to the latest transform state
-      }
-
-      if (e.touches.length < 2) {
-        pinchDataRef.current = null // Clear pinch data if less than 2 touches
-      }
-      if (e.touches.length < 1) {
-        lastTouchRef.current = null // Clear drag data if no touches
-        gestureModeRef.current = "none" // Reset gesture mode if no touches remain
-      } else if (e.touches.length === 1) {
-        // If ending a pinch but one touch remains, switch to drag mode
-        gestureModeRef.current = "drag"
-        const touch = e.touches[0]
-        lastTouchRef.current = { x: touch.clientX, y: touch.clientY }
-        // Potentially reset init_tf here if drag should start fresh after pinch
-        init_tf = transform
+      if (gestureModeRef.current === "pinch" && pinchDataRef.current) {
+        const new_tf = computePinchTransform(pinchDataRef.current)
+        setTransform(new_tf)
+        init_tf = new_tf
       }
     }
 

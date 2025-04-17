@@ -1,9 +1,4 @@
-import {
-  Matrix,
-  compose,
-  translate,
-  scale,
-} from "transformation-matrix"
+import { Matrix, compose, translate, scale } from "transformation-matrix"
 
 type Point = { x: number; y: number }
 
@@ -11,25 +6,28 @@ interface PinchInput {
   initialTransform: Matrix
   initialTouch1: Point
   initialTouch2: Point
-  currentTouch1: Point
-  currentTouch2: Point
+  finalTouch1: Point | null
+  finalTouch2: Point | null
 }
 
 export const computePinchTransform = ({
   initialTransform,
   initialTouch1,
   initialTouch2,
-  currentTouch1,
-  currentTouch2,
+  finalTouch1,
+  finalTouch2,
 }: PinchInput): Matrix => {
+  if (!finalTouch1 || !finalTouch2) {
+    return initialTransform
+  }
   // Calculate initial and current centers
   const initialCenter = {
     x: (initialTouch1.x + initialTouch2.x) / 2,
     y: (initialTouch1.y + initialTouch2.y) / 2,
   }
   const currentCenter = {
-    x: (currentTouch1.x + currentTouch2.x) / 2,
-    y: (currentTouch1.y + currentTouch2.y) / 2,
+    x: (finalTouch1.x + finalTouch2.x) / 2,
+    y: (finalTouch1.y + finalTouch2.y) / 2,
   }
 
   // Calculate initial and current distances between touch points
@@ -38,8 +36,8 @@ export const computePinchTransform = ({
     initialTouch2.y - initialTouch1.y,
   )
   const currentDist = Math.hypot(
-    currentTouch2.x - currentTouch1.x,
-    currentTouch2.y - currentTouch1.y,
+    finalTouch2.x - finalTouch1.x,
+    finalTouch2.y - finalTouch1.y,
   )
 
   // Calculate the scaling factor, prevent division by zero
