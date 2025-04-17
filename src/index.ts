@@ -173,7 +173,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
 
     function handleTouchMove(e: TouchEvent) {
       e.preventDefault()
-      if (!props.transform) return
+      // if (!props.transform) return // Removed this check
       if (props.enabled === false) return
       if (
         gestureModeRef.current === "drag" &&
@@ -183,12 +183,11 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         const touch = e.touches[0]
         const deltaX = touch.clientX - lastTouchRef.current.x
         const deltaY = touch.clientY - lastTouchRef.current.y
-        const new_tf = {
-          ...props.transform,
-          e: props.transform.e + deltaX,
-          f: props.transform.f + deltaY,
-        }
+        // Use the current transform (props or internal) and translate it
+        const new_tf = compose(translate(deltaX, deltaY), transform)
         setTransform(new_tf)
+        // Update init_tf for consistency if needed elsewhere, though ideally refactor away from init_tf
+        init_tf = new_tf
         lastTouchRef.current = { x: touch.clientX, y: touch.clientY }
       } else if (
         gestureModeRef.current === "pinch" &&
@@ -196,37 +195,78 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
         pinchDataRef.current
       ) {
         const touch1 = e.touches[0]
-        const touch2 = e.touches[1]
+      const touch2 = e.touches[1]
 
-        const initialTouch1 = pinchDataRef.current.touch1
-        const initialTouch2 = pinchDataRef.current.touch2
+    // initial positions when pinch began
+    const initialTouch1 = pinchDataRef.current.touch1
+    const initialTouch2 = pinchDataRef.current.touch2
 
-        const currentTouch1 = { x: touch1.clientX, y: touch1.clientY }
-        const currentTouch2 = { x: touch2.clientX, y: touch2.clientY }
+    // current positions
+    const currentTouch1 = { x: touch1.clientX, y: touch1.clientY }
+    const currentTouch2 = { x: touch2.clientX, y: touch2.clientY }
 
-        const pinchTransform = fromTwoMovingPoints(
-          initialTouch1,
-          initialTouch2,
-          currentTouch1,
-          currentTouch2
-        )
+    // centers
+    const initialCenter = {
+      x: (initialTouch1.x + initialTouch2.x) / 2,
+      y: (initialTouch1.y + initialTouch2.y) / 2,
+    }
+    const currentCenter = {
+      x: (currentTouch1.x + currentTouch2.x) / 2,
+      y: (currentTouch1.y + currentTouch2.y) / 2,
+    }
 
-        // Remove rotation and skew from the pinch transformation
-        pinchTransform.b = 0
-        pinchTransform.c = 0
+    // distances
+    const initialDist = Math.hypot(
+      initialTouch2.x - initialTouch1.x,
+      initialTouch2.y - initialTouch1.y
+    )
+    const currentDist = Math.hypot(
+      currentTouch2.x - currentTouch1.x,
+      currentTouch2.y - currentTouch1.y
+    )
 
-        const composed_tf = compose(pinchTransform, props.transform)
-        setTransform(composed_tf)
+    // zoom factor
+    const s = currentDist / initialDist
+
+    // build the pure pan+zoom matrix
+    const pinchTransform = compose(
+      // 1) move origin to current center
+      translate(currentCenter.x, currentCenter.y),
+      // 2) scale
+      scale(s, s),
+      // 3) move back by initial center
+     translate(-initialCenter.x, -initialCenter.y),
+     // 4) apply the transform you had before pinch
+     transform // Use current transform instead of init_tf
+   )
+
+   setTransform(pinchTransform)
+   // Update init_tf for consistency if needed elsewhere, though ideally refactor away from init_tf
+   init_tf = pinchTransform
       }
     }
 
     function handleTouchEnd(e: TouchEvent) {
       e.preventDefault()
       if (e.touches.length === 0) {
+        // All fingers lifted
         gestureModeRef.current = "none"
         lastTouchRef.current = null
         pinchDataRef.current = null
+        // Update init_tf with the final transform after touch ends
+        init_tf = transform
+      } else if (e.touches.length === 1 && gestureModeRef.current === "pinch") {
+        // If ending pinch but one finger remains, switch to drag mode
+        gestureModeRef.current = "drag"
+        const touch = e.touches[0]
+        lastTouchRef.current = { x: touch.clientX, y: touch.clientY }
+        pinchDataRef.current = null
+        // Update init_tf with the final transform after pinch ends
+        init_tf = transform
       }
+      // Note: If starting with one finger, lifting it, then putting two down,
+      // this logic might need refinement depending on desired behavior.
+      // Current logic assumes a continuous gesture.
     }
 
     canvasElm.addEventListener("mousedown", handleMouseDown)
