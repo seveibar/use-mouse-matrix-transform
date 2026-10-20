@@ -84,6 +84,9 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       }, 100)
       return () => clearTimeout(timeout)
     }
+    if (canvasElm.style && !canvasElm.style.transformOrigin) {
+      canvasElm.style.transformOrigin = "0 0"
+    }
     let init_tf = props.transform ?? internalTransform
 
     let m0: Point = { x: 0, y: 0 },
