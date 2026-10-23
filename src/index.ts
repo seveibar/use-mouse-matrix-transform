@@ -72,7 +72,7 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
   } | null>(null)
 
   useEffect(() => {
-    const canvasElm: HTMLCanvasElement | null =
+    const canvasElm: HTMLElement | null =
       props.canvasElm ?? extRef.current
     if (canvasElm && !outerCanvasElm) {
       setWaitCounter(waitCounter + 1)
@@ -84,6 +84,10 @@ export const useMouseMatrixTransform = (props: Props = {}) => {
       }, 100)
       return () => clearTimeout(timeout)
     }
+    if (canvasElm.style) {
+      canvasElm.style.transformOrigin = "0 0"
+    }
+
     let init_tf = props.transform ?? internalTransform
 
     let m0: Point = { x: 0, y: 0 },
